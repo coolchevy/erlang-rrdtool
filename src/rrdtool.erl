@@ -36,7 +36,8 @@
         create/4,
 		create/5,
 		update/3,
-		update/4
+		update/4,
+        graph/6
 ]).
 
 % gen_server callbacks
@@ -80,6 +81,10 @@ update(Pid, Filename, DatastoreValues) ->
 update(Pid, Filename, DatastoreValues, Time) ->
 	gen_server:call(Pid, {update, Filename, format_datastore_values(DatastoreValues), Time}, infinity).
 
+graph(Pid, Filename, Imagename, Datastores, RRAs, Options) ->
+    gen_server:call(Pid, {graph, Filename, Imagename, Datastores, RRAs, Options}, infinity).
+
+
 % gen_server callbacks
 
 %% @hidden
@@ -116,6 +121,21 @@ handle_call({update, Filename, {Datastores, Values}, Time}, _From, Port) ->
 		{Port, {data, {eol, "ERROR:"++Message}}} ->
 			{reply, {error, Message}, Port}
 	end;
+handle_call({graph, Filename, Imagename, Datastores, RRAs, Options}, _From, Port) ->
+    {Megaseconds, Seconds, _Microseconds} = now(),
+    Timestamp = integer_to_list(Megaseconds) ++ integer_to_list(Seconds),
+    GraphOptions = format_options(Options),
+    GraphData = format_graph_datastores(Filename, Datastores, RRAs),
+    Command = ["graph ", Imagename, " ", GraphOptions, " ", GraphData, "--end ", Timestamp, "\n"],
+    io:format("Command: ~p~n", [lists:flatten(Command)]),
+    %{reply, ok, Port};
+    port_command(Port, Command),
+    receive
+        {Port, {data, {eol, "OK"++_}}} ->
+            {reply, ok, Port};
+        {Port, {data, {eol, "ERROR:"++Message}}} ->
+            {reply, {error, Message}, Port}
+    end;
 handle_call(stop, _From, State) ->
 	{stop, normal, ok, State};
 handle_call(Request, _From, State) ->
@@ -236,3 +256,22 @@ format_create_options(Options) ->
 	end,
 
 	lists:flatten([StepOpt, StartOpt]).
+
+format_options(Options) ->
+    lists:flatten(
+        lists:reverse(
+            lists:foldl(
+            fun({Oname, Ovalue}, Acc) when is_atom(Oname) -> 
+                    [["--", atom_to_list(Oname), " ", Ovalue, " "]|Acc];
+                (Oname, Acc) when is_atom(Oname) ->
+                    [["--", atom_to_list(Oname), " "]|Acc]
+            end, [], Options))).
+
+format_graph_datastores(Filename, Datastores, RRAs) ->
+    Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
+    Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
+    Lines = [[" LINE:0#22ff22", ":", X, [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs], "\\j "] || X <- Datastores],
+    lists:flatten([Values, Comments, Lines]).
+
+format_graph_value_name(DS, RRA) ->
+    lists:flatten([DS,"_", atom_to_list(RRA)]).
