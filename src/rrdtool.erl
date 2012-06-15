@@ -33,6 +33,7 @@
 		start_link/0,
 		start_link/1,
 		stop/1,
+        create/4,
 		create/5,
 		update/3,
 		update/4
@@ -66,6 +67,9 @@ start_link(RRDTool) when is_list(RRDTool) ->
 
 stop(Pid) ->
 	gen_server:call(Pid, stop).
+
+create(Pid, Filename, Datastores, RRAs) ->
+    create(Pid, Filename, Datastores, RRAs, []).
 
 create(Pid, Filename, Datastores, RRAs, Options) ->
 	gen_server:call(Pid, {create, Filename, format_datastores(Datastores), format_archives(RRAs), format_create_options(Options)}, infinity).
