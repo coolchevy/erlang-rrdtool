@@ -233,6 +233,8 @@ format_datastore_values([H | T], TAcc, Acc) ->
 			throw({error, bad_datastore_value, H})
 	end.
 
+value_to_list(undefined) ->
+    "U";
 value_to_list(Value) when is_list(Value) ->
 	Value;
 value_to_list(Value) when is_integer(Value) ->
