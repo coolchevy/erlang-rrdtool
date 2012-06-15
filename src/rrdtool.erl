@@ -32,12 +32,12 @@
 		start/1,
 		start_link/0,
 		start_link/1,
-		stop/1,
-        create/4,
-		create/5,
+		stop/0,
+        create/3,
+		create/4,
+		update/2,
 		update/3,
-		update/4,
-        graph/6
+        graph/5
 ]).
 
 % gen_server callbacks
@@ -52,37 +52,39 @@
 -define(STORE_TYPES,
 	['GAUGE', 'COUNTER', 'DERIVE', 'ABSOLUTE', 'COMPUTE']).
 
+-define(SERVER, ?MODULE).
+
 % public API
 
 start() ->
-	gen_server:start(?MODULE, [os:find_executable("rrdtool")], []).
+    application:start(rrdtool).
 
 start(RRDTool) when is_list(RRDTool) ->
 	gen_server:start(?MODULE, [RRDTool], []).
 
 start_link() ->
-	gen_server:start_link(?MODULE, [os:find_executable("rrdtool")], []).
+	gen_server:start_link({local, ?SERVER}, ?MODULE, [os:find_executable("rrdtool")], []).
 
 start_link(RRDTool) when is_list(RRDTool) ->
-	gen_server:start_link(?MODULE, [RRDTool], []).
+	gen_server:start_link({local, ?SERVER}, ?MODULE, [RRDTool], []).
 
-stop(Pid) ->
-	gen_server:call(Pid, stop).
+stop() ->
+    application:stop(rrdtool).
 
-create(Pid, Filename, Datastores, RRAs) ->
-    create(Pid, Filename, Datastores, RRAs, []).
+create(Filename, Datastores, RRAs) ->
+    create(Filename, Datastores, RRAs, []).
 
-create(Pid, Filename, Datastores, RRAs, Options) ->
-	gen_server:call(Pid, {create, Filename, format_datastores(Datastores), format_archives(RRAs), format_create_options(Options)}, infinity).
+create(Filename, Datastores, RRAs, Options) ->
+	gen_server:call(?SERVER, {create, Filename, format_datastores(Datastores), format_archives(RRAs), format_create_options(Options)}, infinity).
 
-update(Pid, Filename, DatastoreValues) ->
-	gen_server:call(Pid, {update, Filename, format_datastore_values(DatastoreValues), n}, infinity).
+update(Filename, DatastoreValues) ->
+	gen_server:call(?SERVER, {update, Filename, format_datastore_values(DatastoreValues), n}, infinity).
 
-update(Pid, Filename, DatastoreValues, Time) ->
-	gen_server:call(Pid, {update, Filename, format_datastore_values(DatastoreValues), Time}, infinity).
+update(Filename, DatastoreValues, Time) ->
+	gen_server:call(?SERVER, {update, Filename, format_datastore_values(DatastoreValues), Time}, infinity).
 
-graph(Pid, Filename, Imagename, Datastores, RRAs, Options) ->
-    gen_server:call(Pid, {graph, Filename, Imagename, Datastores, RRAs, Options}, infinity).
+graph(Filename, Imagename, Datastores, RRAs, Options) ->
+    gen_server:call(?SERVER, {graph, Filename, Imagename, Datastores, RRAs, Options}, infinity).
 
 
 % gen_server callbacks
@@ -261,7 +263,7 @@ format_options(Options) ->
     lists:flatten(
         lists:reverse(
             lists:foldl(
-            fun({Oname, Ovalue}, Acc) when is_atom(Oname) -> 
+            fun({Oname, Ovalue}, Acc) when is_atom(Oname) ->
                     [["--", atom_to_list(Oname), " ", Ovalue, " "]|Acc];
                 (Oname, Acc) when is_atom(Oname) ->
                     [["--", atom_to_list(Oname), " "]|Acc]
