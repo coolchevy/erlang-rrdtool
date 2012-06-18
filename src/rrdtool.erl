@@ -274,7 +274,7 @@ format_options(Options) ->
 format_graph_datastores(Filename, Datastores, RRAs) ->
     Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
     Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
-    Lines = [[" LINE:0#22ff22", ":", X, [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs], "\\j "] || X <- Datastores],
+    Lines = [[" LINE:",format_graph_value_name(X, hd(RRAs)),"#22ff22", ":", X, [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs], "\\j "] || X <- Datastores],
     lists:flatten([Values, Comments, Lines]).
 
 format_graph_value_name(DS, RRA) ->
