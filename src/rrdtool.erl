@@ -273,9 +273,9 @@ format_options(Options) ->
 
 format_graph_datastores(Filename, Datastores, RRAs) ->
     Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
-    CurValues = [["CDEF",":",format_graph_value_name(X, 'CURRENT'), "=", format_graph_value_name(X, hd(RRAs)), " "] || X <- Datastores],
+    CurValues = [["CDEF",":",format_graph_value_name(X, 'LAST'), "=", format_graph_value_name(X, hd(RRAs)), " "] || X <- Datastores],
     Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
-    Lines = [[" LINE1:",format_graph_value_name(X, 'CURRENT'),"#22ff22", ":", X, [" GPRINT:", format_graph_value_name(X, 'CURRENT'), ":", "CURRENT:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs], "\\j "] || X <- Datastores],
+    Lines = [[" LINE1:",format_graph_value_name(X, 'LAST'),"#22ff22", ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs], "\\j "] || X <- Datastores],
     lists:flatten([Values,CurValues, Comments, Lines]).
 
 format_graph_value_name(DS, RRA) ->
