@@ -242,8 +242,6 @@ format_datastore_values([H | T], TAcc, Acc) ->
 			throw({error, bad_datastore_value, H})
 	end.
 
-value_to_list(undefined) ->
-    "U";
 value_to_list(Value) when is_list(Value) ->
 	Value;
 value_to_list(Value) when is_integer(Value) ->
@@ -251,7 +249,9 @@ value_to_list(Value) when is_integer(Value) ->
 value_to_list(Value) when is_float(Value) ->
 	float_to_list(Value);
 value_to_list(Value) when is_binary(Value) ->
-	binary_to_list(Value).
+	binary_to_list(Value);
+value_to_list(_) ->
+    "U".
 
 format_create_options(Options) ->
 	StepOpt = case proplists:get_value(step, Options) of
