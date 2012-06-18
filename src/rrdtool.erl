@@ -138,7 +138,7 @@ handle_call({graph, Filename, Imagename, Datastores, RRAs, Options}, _From, Port
     GraphOptions = format_options(Options),
     GraphData = format_graph_datastores(Filename, Datastores, RRAs),
     Command = ["graph ", Imagename, " ", GraphOptions, " ", GraphData, "--end ", Timestamp, "\n"],
-    io:format("Command: ~p~n", [lists:flatten(Command)]),
+    %io:format("Command: ~p~n", [lists:flatten(Command)]),
     %{reply, ok, Port};
     port_command(Port, Command),
     receive
