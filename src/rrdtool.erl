@@ -281,16 +281,17 @@ format_options(Options) ->
             end, [], Options))).
 
 format_graph_datastores(Filename, Datastores, RRAs) ->
-    Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
-    CurValues = [["CDEF",":",format_graph_value_name(X, 'LAST'), "=", format_graph_value_name(X, hd(RRAs)), " "] || X <- Datastores],
-    Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
+    Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || {R,_} <- RRAs] || X <- Datastores],
+    {FRRa,_} = hd(RRAs),
+    CurValues = [["CDEF",":",format_graph_value_name(X, 'LAST'), "=", format_graph_value_name(X, FRRa), " "] || X <- Datastores],
+    Comments = ["COMMENT:.   ", " COMMENT:last ", [[" COMMENT:", X] || {_, X} <- RRAs], "\\j "],
     Lines = lists:reverse(
         lists:foldl(fun(X, Acc) ->
                 case Acc of
                     [] -> TYPE = " AREA:";
                     _ -> TYPE = " STACK:"
                 end,
-                [[TYPE,format_graph_value_name(X, 'LAST'),lists:nth(length(Acc) +1, ?COLORS), ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs],
+                [[TYPE,format_graph_value_name(X, 'LAST'),lists:nth(length(Acc) +1, ?COLORS), ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || {R,_} <- RRAs],
                     "\\j "] | Acc]
         end, [], Datastores)),
     lists:flatten([Values,CurValues, Comments, Lines]).
