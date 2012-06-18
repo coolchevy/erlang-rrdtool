@@ -52,6 +52,15 @@
 -define(STORE_TYPES,
 	['GAUGE', 'COUNTER', 'DERIVE', 'ABSOLUTE', 'COMPUTE']).
 
+-define(COLORS, ["FF0000", "00FF00", "0000FF", "FFFF00", "FF00FF", "00FFFF", "000000", 
+    "800000", "008000", "000080", "808000", "800080", "008080", "808080", 
+    "C00000", "00C000", "0000C0", "C0C000", "C000C0", "00C0C0", "C0C0C0", 
+    "400000", "004000", "000040", "404000", "400040", "004040", "404040", 
+    "200000", "002000", "000020", "202000", "200020", "002020", "202020", 
+    "600000", "006000", "000060", "606000", "600060", "006060", "606060", 
+    "A00000", "00A000", "0000A0", "A0A000", "A000A0", "00A0A0", "A0A0A0", 
+    "E00000", "00E000", "0000E0", "E0E000", "E000E0", "00E0E0", "E0E0E0"]).
+
 -define(SERVER, ?MODULE).
 
 % public API
@@ -275,14 +284,15 @@ format_graph_datastores(Filename, Datastores, RRAs) ->
     Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
     CurValues = [["CDEF",":",format_graph_value_name(X, 'LAST'), "=", format_graph_value_name(X, hd(RRAs)), " "] || X <- Datastores],
     Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
-    Lines = lists:map(fun(X) ->
-                case Datastores of
-                    [X|_] -> TYPE = " AREA:";
+    Lines = lists:reverse(
+        lists:foldl(fun(X, Acc) ->
+                case Acc of
+                    [] -> TYPE = " AREA:";
                     _ -> TYPE = " STACK:"
                 end,
-                [TYPE,format_graph_value_name(X, 'LAST'),"#22ff22", ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs],
-                    "\\j "]
-        end, Datastores),
+                [[TYPE,format_graph_value_name(X, 'LAST'),lists:nth(length(Acc) +1, ?COLORS), ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs],
+                    "\\j "] | Acc]
+        end, [], Datastores)),
     lists:flatten([Values,CurValues, Comments, Lines]).
 
 format_graph_value_name(DS, RRA) ->
