@@ -125,7 +125,7 @@ handle_call({update, Filename, {Datastores, Values}, Time}, _From, Port) ->
 	end;
 handle_call({graph, Filename, Imagename, Datastores, RRAs, Options}, _From, Port) ->
     {Megaseconds, Seconds, _Microseconds} = now(),
-    Timestamp = integer_to_list(Megaseconds) ++ integer_to_list(Seconds),
+    Timestamp = integer_to_list(Megaseconds * 1000000 + Seconds),
     GraphOptions = format_options(Options),
     GraphData = format_graph_datastores(Filename, Datastores, RRAs),
     Command = ["graph ", Imagename, " ", GraphOptions, " ", GraphData, "--end ", Timestamp, "\n"],
