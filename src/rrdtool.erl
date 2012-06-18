@@ -275,10 +275,10 @@ format_graph_datastores(Filename, Datastores, RRAs) ->
     Values = [[["DEF:", format_graph_value_name(X, R),"=", Filename, ":", X, ":", atom_to_list(R), " "] || R <- RRAs] || X <- Datastores],
     CurValues = [["CDEF",":",format_graph_value_name(X, 'LAST'), "=", format_graph_value_name(X, hd(RRAs)), " "] || X <- Datastores],
     Comments = ["COMMENT:.   ", [[" COMMENT:", atom_to_list(X)] || X <- RRAs], "\\j "],
-    Lines = lists:map(fun(X) -> 
-                case [X|_] = Datastores of
-                    true -> TYPE = " AREA:";
-                    false -> TYPE = " STACK:"
+    Lines = lists:map(fun(X) ->
+                case Datastores of
+                    [X|_] -> TYPE = " AREA:";
+                    _ -> TYPE = " STACK:"
                 end,
                 [TYPE,format_graph_value_name(X, 'LAST'),"#22ff22", ":", X, [" GPRINT:", format_graph_value_name(X, 'LAST'), ":", "LAST:%6.2lf%s"], [[" GPRINT:", format_graph_value_name(X, R), ":", atom_to_list(R), ":", "%6.2lf%s"] || R <- RRAs],
                     "\\j "]
